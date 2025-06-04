@@ -20,7 +20,7 @@ const QUESTIONS = [
   // Q3以降に40問の設問を追加（後ほど省略せずに生成）
 ];
 
-const ANSWER_VALUES = {
+const ANSWER_VALUES: Record<string, number> = {
   'あてはまる': 2,
   'どちらかといえばあてはまる': 1,
   'どちらでもない': 0,
@@ -28,7 +28,7 @@ const ANSWER_VALUES = {
   'あてはまらない': -2,
 };
 
-const CATEGORY_MAP = {
+const CATEGORY_MAP: Record<string, number[]> = {
   talk: [1, 2, 3, 4, 5],
   focus: [6, 7, 8, 9, 10],
   idea: [11, 12, 13, 14, 15],
@@ -39,9 +39,16 @@ const CATEGORY_MAP = {
   output: [36, 37, 38, 39, 40],
 };
 
+// 明示的な型定義
+interface Answers {
+  grade: string;
+  faculty: string;
+  [key: string]: any;
+}
+
 export default function SelfAnalysisApp() {
   const router = useRouter();
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState<Answers>({} as Answers);
   const [currentQ, setCurrentQ] = useState(0);
 
   const handleAnswer = (value: string) => {
