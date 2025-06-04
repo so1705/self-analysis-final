@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 
-import { QUESTIONS, ANSWER_VALUES, CATEGORY_MAP } from "./questionData"; // ←設問とマッピングを分離してるならここで管理
-// もし設問がこのファイルに含まれてるならそのままでOK
+import { QUESTIONS, ANSWER_VALUES, CATEGORY_MAP } from "./questionData";
 
 interface Answers {
   [key: string]: string;
@@ -31,29 +30,48 @@ export default function SelfAnalysisApp() {
   };
 
   const handleSubmit = async () => {
+    console.log("▶️ handleSubmit start");
+
     const scoreData = calcScores();
     const fullAnswers = Object.values(answers).map((v) => ANSWER_VALUES[v] || 0);
 
-    // 回答データを保存 → resultIdを受け取る
-    const res = await fetch("/api/saveAnswer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers: fullAnswers }),
-    });
-    const { resultId } = await res.json();
+    try {
+      // Firestoreへ保存
+      const res = await fetch("/api/saveAnswers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: fullAnswers }),
+      });
 
-    // Discord通知
-    await fetch("/api/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resultId }),
-    });
+      if (!res.ok) {
+        throw new Error("📛 saveAnswers API error");
+      }
 
-    // 結果ページへ遷移
-    router.push(`/result/${resultId}`);
+      const { resultId } = await res.json();
+      console.log("✅ Firestore保存完了：", resultId);
+
+      // Discord通知
+      const discordRes = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId }),
+      });
+
+      if (!discordRes.ok) {
+        throw new Error("📛 Discord通知エラー");
+      }
+
+      console.log("📨 Discord通知成功");
+
+      // 結果ページへ
+      router.push(`/result/${resultId}`);
+    } catch (err) {
+      console.error("❌ 送信エラー:", err);
+      alert("送信中にエラーが発生しました。開発者に連絡してください。");
+    }
   };
 
-  // 全問終了後の送信画面
+  // 全問終了後の画面
   if (current >= QUESTIONS.length) {
     return (
       <div className="text-center mt-12">
