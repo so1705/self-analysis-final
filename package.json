@@ -15,5 +15,9 @@
     "react": "^19.1.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.6",
+    "typescript": "^5.8.3"
   }
 }
